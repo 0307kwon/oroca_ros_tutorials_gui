@@ -1,0 +1,16 @@
+include/oroca_ros_tutorials_gui/main_window.hpp
+include/oroca_ros_tutorials_gui/msgThread.hpp
+include/oroca_ros_tutorials_gui/qnode.hpp
+resources/images/icon.png
+resources/images.qrc
+src/main.cpp
+src/main_window.cpp
+src/msgThread.cpp
+src/qnode.cpp
+ui/main_window.ui
+ui/main_window.ui.autosave
+CMakeLists.txt
+mainpage.dox
+package.xml
+include/oroca_ros_tutorials_gui/qcustomplot.hpp
+src/qcustomplot.cpp
