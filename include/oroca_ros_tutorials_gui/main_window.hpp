@@ -58,6 +58,8 @@ public Q_SLOTS:
 	void on_disarm_button_clicked();
 	void on_startR_button_clicked();
 	void on_stopR_button_clicked();
+	void on_startT_button_clicked();
+	void on_stopT_button_clicked();
 	void on_checkbox_use_environment_stateChanged(int state);
 	void keyPressEvent(QKeyEvent *event);
 	void keyReleaseEvent(QKeyEvent *event);

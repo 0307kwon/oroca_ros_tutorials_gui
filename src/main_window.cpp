@@ -55,6 +55,9 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
 	ui.disarm_button->setEnabled(false);
 	ui.stopR_button->setEnabled(false);
 
+	ui.startT_button->setEnabled(false);
+	ui.stopT_button->setEnabled(false);
+
 	/*********************
 	** Logging
 	**********************/
@@ -157,6 +160,9 @@ void MainWindow::on_onboard_button_clicked() {
 	ui.target_y->setText("NOT OFFBOARD MODE");
 	ui.target_z->setText("NOT OFFBOARD MODE");
 
+	ui.startT_button->setEnabled(false);
+	ui.stopT_button->setEnabled(false);
+
 }
 void MainWindow::on_offboard_button_clicked(){ // offboard 버튼을 누르면 arming 상태로 자동으로 시작합니다.
 	qnode.CommandOffboard(true);
@@ -166,6 +172,11 @@ void MainWindow::on_offboard_button_clicked(){ // offboard 버튼을 누르면 a
 	qnode.CommandArm(true);
 	ui.arm_button->setEnabled(false);
 	ui.disarm_button->setEnabled(true);
+
+
+	ui.startT_button->setEnabled(true);
+	ui.stopT_button->setEnabled(false);
+
 }
 
 void MainWindow::on_arm_button_clicked() {
@@ -192,6 +203,21 @@ void MainWindow::on_stopR_button_clicked() {
 	ui.startR_button->setEnabled(true);
 	ui.stopR_button->setEnabled(false);
 }
+
+void MainWindow::on_startT_button_clicked() {
+	qnode.startTracking();
+	qnode.log(qnode.Info,"start Tracking");
+	ui.startT_button->setEnabled(false);
+	ui.stopT_button->setEnabled(true);
+}
+
+void MainWindow::on_stopT_button_clicked() {
+	qnode.stopTracking();
+	qnode.log(qnode.Info,"stop Tracking");
+	ui.startT_button->setEnabled(true);
+	ui.stopT_button->setEnabled(false);
+}
+
 
 
 
@@ -273,6 +299,7 @@ void MainWindow::updateLoggingView() {
 void MainWindow::updateRPY(double roll,double pitch,double yaw){
 	ui.label_roll->setText(QString::number(roll));
 	ui.label_pitch->setText(QString::number(pitch));
+	ui.label_yaw->setText(QString::number(yaw));
 }
 
 

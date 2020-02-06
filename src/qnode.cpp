@@ -14,6 +14,7 @@
 #include <ros/network.h>
 #include <string>
 #include <sstream>
+#include <iostream>
 #include "../include/oroca_ros_tutorials_gui/qnode.hpp"
 #include "geometry_msgs/PoseStamped.h"
 #include "geometry_msgs/TwistStamped.h"
@@ -25,16 +26,23 @@
 #include <tf/tf.h>
 #include <fstream>
 #include <time.h>
+#include "../include/tnt_126/tnt.h"
+#include <cstring>
+#include <vector>
 
 
 #define PI 3.14159265358979323846
 
+#define T_MAXROW	500 // 트래킹
 
 /*****************************************************************************
 ** Namespaces
 *****************************************************************************/
 
 namespace oroca_ros_tutorials_gui {
+
+	using namespace TNT;
+	using namespace std;
 
 		double positionX=0;
 		double positionY=0;
@@ -51,6 +59,12 @@ namespace oroca_ros_tutorials_gui {
 		float target_x=0;
 		float target_y=0;
 		float target_z=0;
+//
+
+//tracking 변수들
+		Array2D<double> track(T_MAXROW,3); // 트랙 저장//
+
+		int count = 0;
 //
 
 
@@ -92,6 +106,22 @@ namespace oroca_ros_tutorials_gui {
 *****************************************************************************/
 
 
+vector<string> split(string target, string delimiter){
+	vector<string> result;
+	int position = target.find(delimiter);
+
+	while (position != -1) {
+		string str1 = target.substr(0, position);
+		result.push_back(str1);
+		target = target.substr(position + 1);
+		position = target.find(delimiter);
+	}
+	result.push_back(target);
+
+	return result;
+}
+
+
 
 QNode::QNode(int argc, char** argv ) :
 	init_argc(argc),
@@ -100,7 +130,44 @@ QNode::QNode(int argc, char** argv ) :
 		arming = false;
 		offboard = false;
 		bool_recoding = false;
+		bool_tracking = false;
 		filePath = "";
+
+		//트래킹 파일을 읽어와서 tnt 배열에 저장합니다.//
+
+
+		T_filePath =  "MyPath.txt";
+		T_readFile.open(T_filePath);
+
+		if(T_readFile.is_open()){
+			//while(!T_readFile.eof()){
+			string strline;
+			vector<string> vec;
+
+
+			for(int i =0; i<500; i++){
+				getline(T_readFile,strline);
+				vec = split(strline,",");
+
+				track[i][0] = stod(vec.at(0));
+				track[i][1] = stod(vec.at(1));
+				track[i][2] = stod(vec.at(2));
+
+				cout << track[i][0] << "," << track[i][1] << "," << track[i][2] <<endl;
+			}
+
+
+			T_readFile.close();
+
+		}
+
+
+
+
+
+		//
+
+
 
 	}
 
@@ -188,7 +255,7 @@ bool QNode::init(const std::string &master_url, const std::string &host_url) { /
 
 void QNode::run() { // 여기서 계속 publish loop
 
-	ros::Rate rate(20.0);
+	ros::Rate rate(20.0); // 50ms 단위로 publish
 
 	while(ros::ok() && !current_state.connected){
 
@@ -284,11 +351,32 @@ void QNode::run() { // 여기서 계속 publish loop
 
 
 				//위치를 publish//
-				pose.pose.position.x = target_x;
-				pose.pose.position.y = target_y;
-				pose.pose.position.z = target_z;
+				if(offboard == true) {//offboard상태일때만 위치 publish
+					if(bool_tracking == true){ // 트래킹 코드
 
-        local_pos_pub.publish(pose);
+						if(count < T_MAXROW){ // 메세지 갯수만큼 타겟 포지션이 입력됩니다.
+							pose.pose.position.x = track[count][0];
+							pose.pose.position.y = track[count][1];
+							pose.pose.position.z = track[count][2];
+
+							target_x = track[count][0];
+							target_y = track[count][1];
+							target_z = track[count][2];
+
+							count++;
+						}else if(count == 500){ // 마지막 메세지에 도달하면
+								log(Info,"reached final target position");
+								count++;
+						}
+
+					}else{ // 키보드 조종
+						pose.pose.position.x = target_x;
+						pose.pose.position.y = target_y;
+						pose.pose.position.z = target_z;
+					}
+
+        	local_pos_pub.publish(pose);
+				}
 
         ros::spinOnce();
         rate.sleep();
@@ -303,6 +391,7 @@ void QNode::CommandOffboard(bool boolean){
 		target_y = positionY;
 		target_z = positionZ;
 	}
+	bool_tracking = false;
 	offboard = boolean;
 }
 
@@ -311,15 +400,24 @@ void QNode::CommandArm(bool boolean){
 }
 
 void QNode::setPosZ(float a){
-	target_z +=a;
+	if(offboard == true &&
+		bool_tracking == false){
+		target_z +=a;
+	}
 }
 
 void QNode::setPosX(float a){
-	target_y += a;
+	if(offboard == true &&
+		bool_tracking == false){
+			target_y += a;
+	}
 }
 
 void QNode::setPosY(float a){
+	if(offboard == true &&
+		bool_tracking == false){
 	target_x += a;
+	}
 }
 
 /* 일단 안쓰는것 (속도 컨트롤 할때 썼던 것임)
@@ -372,7 +470,7 @@ void QNode::startRecord(){
 	if(filePath == ""){ // 첫 startRecord버튼 누를시 //
 		//파일 새로 생성 //
 		//텍스트 파일 저장 관련 변수
-				filePath = "/home/kwon/catkin_ws/drone_Info.txt";
+				filePath = "kwon_drone_Info.txt";
 				writeFile.open(filePath.data());
 
 				writeFile << "time(sec),"<<"position_x," << "position_y," << "position_z,"
@@ -387,6 +485,18 @@ void QNode::startRecord(){
 
 void QNode::stopRecord(){
 	bool_recoding = false;
+}
+
+void QNode::startTracking(){
+	bool_tracking = true;
+	count = 0;
+}
+
+void QNode::stopTracking(){
+	target_x = positionX;
+	target_y = positionY;
+	target_z = positionZ;
+	bool_tracking = false;
 }
 
 

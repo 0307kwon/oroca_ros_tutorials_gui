@@ -139,20 +139,13 @@
            <item row="0" column="0">
             <widget class="QListView" name="view_logging"/>
            </item>
-           <item row="5" column="0">
+           <item row="6" column="0">
             <widget class="QCustomPlot" name="plot_xy" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_5">
-             <property name="text">
-              <string>position</string>
              </property>
             </widget>
            </item>
@@ -375,6 +368,99 @@
              </layout>
             </widget>
            </item>
+           <item row="2" column="0">
+            <widget class="QGroupBox" name="groupBox_3">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>50</height>
+              </size>
+             </property>
+             <property name="title">
+              <string>Tracking</string>
+             </property>
+             <layout class="QFormLayout" name="formLayout_2">
+              <item row="0" column="1">
+               <widget class="QPushButton" name="stopT_button">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>150</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>150</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Set the target to the current joint trajectory state.</string>
+                </property>
+                <property name="statusTip">
+                 <string>Clear all waypoints and set the target to the current joint trajectory state.</string>
+                </property>
+                <property name="text">
+                 <string>stop tracking</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QPushButton" name="startT_button">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>150</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>150</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Set the target to the current joint trajectory state.</string>
+                </property>
+                <property name="statusTip">
+                 <string>Clear all waypoints and set the target to the current joint trajectory state.</string>
+                </property>
+                <property name="text">
+                 <string>start tracking</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="label_5">
+             <property name="text">
+              <string>position</string>
+             </property>
+             <property name="textFormat">
+              <enum>Qt::AutoText</enum>
+             </property>
+            </widget>
+           </item>
           </layout>
          </widget>
         </item>
@@ -458,6 +544,19 @@
            <string>Ros Master</string>
           </property>
           <layout class="QGridLayout" name="gridLayout">
+           <item row="15" column="0">
+            <widget class="QLabel" name="label_7">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <property name="text">
+              <string>Pitch</string>
+             </property>
+            </widget>
+           </item>
            <item row="12" column="0">
             <widget class="QLabel" name="label_4">
              <property name="text">
@@ -615,21 +714,8 @@
              </property>
             </widget>
            </item>
-           <item row="15" column="0">
-            <widget class="QLabel" name="label_7">
-             <property name="frameShape">
-              <enum>QFrame::StyledPanel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>Pitch</string>
-             </property>
-            </widget>
-           </item>
-           <item row="14" column="1">
-            <widget class="QLabel" name="label_roll">
+           <item row="15" column="1">
+            <widget class="QLabel" name="label_pitch">
              <property name="frameShape">
               <enum>QFrame::StyledPanel</enum>
              </property>
@@ -641,8 +727,8 @@
              </property>
             </widget>
            </item>
-           <item row="15" column="1">
-            <widget class="QLabel" name="label_pitch">
+           <item row="14" column="1">
+            <widget class="QLabel" name="label_roll">
              <property name="frameShape">
               <enum>QFrame::StyledPanel</enum>
              </property>
@@ -743,6 +829,32 @@
              </property>
              <property name="text">
               <string>disarm_button</string>
+             </property>
+            </widget>
+           </item>
+           <item row="16" column="1">
+            <widget class="QLabel" name="label_yaw">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <property name="text">
+              <string>0</string>
+             </property>
+            </widget>
+           </item>
+           <item row="16" column="0">
+            <widget class="QLabel" name="label_15">
+             <property name="frameShape">
+              <enum>QFrame::StyledPanel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <property name="text">
+              <string>Yaw</string>
              </property>
             </widget>
            </item>

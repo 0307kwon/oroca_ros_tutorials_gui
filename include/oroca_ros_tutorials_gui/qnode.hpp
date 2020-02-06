@@ -76,6 +76,9 @@ public:
   void CommandOffboard(bool boolean);
   void startRecord();
   void stopRecord();
+  void startTracking();
+  void stopTracking();
+
 
 
 Q_SIGNALS:
@@ -104,12 +107,17 @@ private:
   QStringListModel logging_model;
 
 
+  //트래킹 텍스트 파일 변수//
+  std::string T_filePath;
+  std::ifstream T_readFile;
+  //
 
   //텍스트 파일 저장 관련 변수
   std::string filePath;
   std::ofstream writeFile;
 
   bool bool_recoding;
+  bool bool_tracking;
   // 끝
 
 
