@@ -10,7 +10,7 @@ project(oroca_ros_tutorials_gui)
 ##############################################################################
 
 # qt_build provides the qt cmake glue, roscpp the comms for a default talker
-find_package(catkin REQUIRED COMPONENTS qt_build message_generation std_msgs roscpp)
+find_package(catkin REQUIRED COMPONENTS qt_build message_generation std_msgs roscpp roslib)
 
 generate_messages(DEPENDENCIES std_msgs)
 
@@ -20,7 +20,7 @@ include_directories(${catkin_INCLUDE_DIRS})
 # exporting anything.
 catkin_package(
 LIBRARIES ros_tutorials_service
-CATKIN_DEPENDS std_msgs roscpp mavros_msgs
+CATKIN_DEPENDS std_msgs roscpp mavros_msgs roslib
 )
 
 

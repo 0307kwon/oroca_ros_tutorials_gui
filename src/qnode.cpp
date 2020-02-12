@@ -16,8 +16,9 @@
 #include <sstream>
 #include <iostream>
 #include "../include/oroca_ros_tutorials_gui/qnode.hpp"
-#include "geometry_msgs/PoseStamped.h"
+#include "mavros_msgs/PositionTarget.h"
 #include "geometry_msgs/TwistStamped.h"
+#include "geometry_msgs/PoseStamped.h"
 #include "mavros_msgs/CommandBool.h"
 #include "mavros_msgs/CommandTOL.h"
 #include "mavros_msgs/SetMode.h"
@@ -29,6 +30,7 @@
 #include "../include/tnt_126/tnt.h"
 #include <cstring>
 #include <vector>
+#include <ros/package.h>
 
 
 #define PI 3.14159265358979323846
@@ -43,23 +45,32 @@ namespace oroca_ros_tutorials_gui {
 
 	using namespace TNT;
 	using namespace std;
+	//목표 값을 publish 하는 변수들//---------------------------------------
+		double s_veloX=1;
+		double s_veloY=1;
+		double s_veloZ=1;
 
+		//offboard mode로 진입했을때 position 컨트롤 초기값//
+		float target_x=0;
+		float target_y=0;
+		float target_z=0;
+		//
+
+		double s_yawRate=1;
+		double s_yaw = 0;
+		//----------------------------------------------------------------
+		//받아오는 값 //
 		double positionX=0;
 		double positionY=0;
- 		double positionZ=0;
-		double yaw_rate=0;
+		double positionZ=0;
 		double roll=0;
 		double pitch=0;
 		double yaw=0;
 		double velocity_x=0;
 		double velocity_y=0;
 		double velocity_z=0;
+		//----------------------------------------------------------------
 
-//offboard mode로 진입했을때 position 컨트롤 초기값//
-		float target_x=0;
-		float target_y=0;
-		float target_z=0;
-//
 
 //tracking 변수들
 		Array2D<double> track(T_MAXROW,3); // 트랙 저장//
@@ -82,17 +93,17 @@ namespace oroca_ros_tutorials_gui {
 			current_state = *msg;
 	}
 
-	void position_cb(const nav_msgs::Odometry::ConstPtr& msg){
+	void position_cb(const geometry_msgs::PoseStamped	::ConstPtr& msg){
 
 
-		tf::Quaternion q(msg->pose.pose.orientation.x, msg->pose.pose.orientation.y,msg->pose.pose.orientation.z,msg->pose.pose.orientation.w);
+		tf::Quaternion q(msg->pose.orientation.x, msg->pose.orientation.y,msg->pose.orientation.z,msg->pose.orientation.w);
 
 		tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
 
 
-		positionX = msg->pose.pose.position.x;
-		positionY = msg->pose.pose.position.y;
-		positionZ = msg->pose.pose.position.z;
+		positionX = msg->pose.position.x;
+		positionY = msg->pose.position.y;
+		positionZ = msg->pose.position.z;
 	}
 
 	void velocity_cb(const geometry_msgs::TwistStamped::ConstPtr& msg){
@@ -132,12 +143,17 @@ QNode::QNode(int argc, char** argv ) :
 		bool_recoding = false;
 		bool_tracking = false;
 		filePath = "";
+		cout << filePath <<endl;
 
 		//트래킹 파일을 읽어와서 tnt 배열에 저장합니다.//
 
 
-		T_filePath =  "MyPath.txt";
+		T_filePath = ros::package::getPath("oroca_ros_tutorials_gui");
+		T_filePath += "/path/MyPath.txt";
+
 		T_readFile.open(T_filePath);
+
+
 
 		if(T_readFile.is_open()){
 			//while(!T_readFile.eof()){
@@ -153,7 +169,8 @@ QNode::QNode(int argc, char** argv ) :
 				track[i][1] = stod(vec.at(1));
 				track[i][2] = stod(vec.at(2));
 
-				cout << track[i][0] << "," << track[i][1] << "," << track[i][2] <<endl;
+				//	cout << track[i][0] <<endl;
+
 			}
 
 
@@ -217,12 +234,14 @@ bool QNode::init() { // ros 노드 실행하는 코드인
 
 	// Add your ros communications here.
 	state_sub = n.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
-	position_sub = n.subscribe("mavros/local_position/odom", 10, position_cb);
-	velocity_sub = n.subscribe("mavros/local_position/velocity_body",10,velocity_cb);
-	local_pos_pub = n.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10); // arming 미션//
+	position_sub = n.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 10, position_cb);
+	velocity_sub = n.subscribe<geometry_msgs::TwistStamped>("mavros/local_position/velocity_body",10,velocity_cb);
+
 	set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");// offboard 설정//
 	arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming"); // arming
 	land_client = n.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land"); // land
+
+	local_pos_pub = n.advertise<mavros_msgs::PositionTarget>("gcs/setpoint_raw/position", 10); // 목표지점 publish//
 
 	return true;
 }
@@ -242,13 +261,15 @@ bool QNode::init(const std::string &master_url, const std::string &host_url) { /
 	startTime = ros::WallTime::now();//시작시간 기록//
 
 	// Add your ros communications here.
-	state_sub = n.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
-	position_sub = n.subscribe("mavros/local_position/odom", 10, position_cb);
-	velocity_sub = n.subscribe("mavros/local_position/velocity_body",10,velocity_cb);
-	local_pos_pub = n.advertise<geometry_msgs::PoseStamped>("mavros/setpoint_position/local", 10); // arming 미션//
-	set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");// offboard 설정//
-	arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming"); // arming
-	land_client = n.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land"); // land
+		state_sub = n.subscribe<mavros_msgs::State>("mavros/state", 10, state_cb);
+		position_sub = n.subscribe("mavros/local_position/pose", 10, position_cb);
+		velocity_sub = n.subscribe("mavros/local_position/velocity_body",10,velocity_cb);
+
+		set_mode_client = n.serviceClient<mavros_msgs::SetMode>("mavros/set_mode");// offboard 설정//
+		arming_client = n.serviceClient<mavros_msgs::CommandBool>("mavros/cmd/arming"); // arming
+		land_client = n.serviceClient<mavros_msgs::CommandTOL>("mavros/cmd/land"); // land
+
+	local_pos_pub = n.advertise<mavros_msgs::PositionTarget>("gcs/setpoint_raw/position", 10); // 목표지점 publish//
 
 	return true;
 }
@@ -264,19 +285,27 @@ void QNode::run() { // 여기서 계속 publish loop
 
 	}
 
-	geometry_msgs::PoseStamped pose;
+ 	mavros_msgs::PositionTarget pose;
 	pose.header.stamp = ros::Time::now();
 	pose.header.frame_id = "body";
-	/*이건 ~setpoint_raw/local (mavros_msgs/PositionTarget) 이거 사용할때 쓰던 옵션
 	pose.coordinate_frame = mavros_msgs::PositionTarget::FRAME_BODY_NED;
-	pose.type_mask =
+	//필요한 정보들//
+	pose.type_mask = 0;
+	/*
 	 mavros_msgs::PositionTarget::IGNORE_PZ |
 	 mavros_msgs::PositionTarget::IGNORE_YAW;// | mavros_msgs::PositionTarget::추가하고싶은거//
-	pose.velocity.x = veloX;
-	pose.velocity.y = veloY;
-	pose.velocity.z = veloZ;
-	pose.yaw_rate = yaw_rate;
-	*/
+*/
+	pose.velocity.x = s_veloX;
+	pose.velocity.y = s_veloY;
+	pose.velocity.z = s_veloZ;
+
+	pose.position.x = target_x;
+	pose.position.y = target_y;
+	pose.position.z = target_z;
+
+	pose.yaw = 0;
+	pose.yaw_rate = s_yawRate;
+ ///끝 //
 
 
 	for(int i = 100; ros::ok() && i > 0; --i){
@@ -355,9 +384,9 @@ void QNode::run() { // 여기서 계속 publish loop
 					if(bool_tracking == true){ // 트래킹 코드
 
 						if(count < T_MAXROW){ // 메세지 갯수만큼 타겟 포지션이 입력됩니다.
-							pose.pose.position.x = track[count][0];
-							pose.pose.position.y = track[count][1];
-							pose.pose.position.z = track[count][2];
+							pose.position.x = track[count][0];
+							pose.position.y = track[count][1];
+							pose.position.z = track[count][2];
 
 							target_x = track[count][0];
 							target_y = track[count][1];
@@ -367,12 +396,18 @@ void QNode::run() { // 여기서 계속 publish loop
 						}else if(count == 500){ // 마지막 메세지에 도달하면
 								log(Info,"reached final target position");
 								count++;
-						}
-
+							}
 					}else{ // 키보드 조종
-						pose.pose.position.x = target_x;
-						pose.pose.position.y = target_y;
-						pose.pose.position.z = target_z;
+						pose.velocity.x = s_veloX;
+						pose.velocity.y = s_veloY;
+						pose.velocity.z = s_veloZ;
+
+						pose.position.x = target_x;
+						pose.position.y = target_y;
+						pose.position.z = target_z;
+
+						pose.yaw = 0;
+						pose.yaw_rate = s_yawRate;
 					}
 
         	local_pos_pub.publish(pose);
@@ -470,7 +505,10 @@ void QNode::startRecord(){
 	if(filePath == ""){ // 첫 startRecord버튼 누를시 //
 		//파일 새로 생성 //
 		//텍스트 파일 저장 관련 변수
-				filePath = "kwon_drone_Info.txt";
+
+		filePath = ros::package::getPath("oroca_ros_tutorials_gui");
+		filePath += "/log/kwon_log.txt";
+
 				writeFile.open(filePath.data());
 
 				writeFile << "time(sec),"<<"position_x," << "position_y," << "position_z,"
